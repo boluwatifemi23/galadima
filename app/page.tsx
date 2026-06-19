@@ -7,9 +7,7 @@ import {
   unsubscribeUser,
 } from './actions'
 
-/* ────────────────────────────────
-   VAPID helper
-──────────────────────────────── */
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat(
     (4 - (base64String.length % 4)) % 4
@@ -29,16 +27,14 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray
 }
 
-/* ────────────────────────────────
-   PUSH NOTIFICATIONS
-──────────────────────────────── */
+
 function PushNotificationManager() {
   const [mounted, setMounted] = useState(false)
   const [subscription, setSubscription] =
     useState<PushSubscription | null>(null)
   const [message, setMessage] = useState('')
 
-  // Always start identical on server + client
+  
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -161,9 +157,7 @@ function PushNotificationManager() {
   )
 }
 
-/* ────────────────────────────────
-   INSTALL PROMPT
-──────────────────────────────── */
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
   userChoice: Promise<{
