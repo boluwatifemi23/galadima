@@ -1,3 +1,16 @@
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  
+  --color-primary: #c41230;
+  --color-primary-dark: #9e0e26;
+  --color-primary-muted: #fdf0f2;
+  --color-gold: #c9a84c;
+  --color-gold-muted: #fdf8ee;
+}
+
+
 @import "tailwindcss";
 
 :root {
@@ -12,12 +25,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
 
 body {
   background: var(--background);
