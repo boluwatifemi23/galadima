@@ -173,22 +173,36 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 function InstallPrompt() {
+  const [mounted, setMounted] = useState(false)
+
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null)
 
-  const isIOS =
-    typeof window !== 'undefined' &&
-    /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const [isIOS, setIsIOS] = useState(false)
 
-  const isStandalone =
-    typeof window !== 'undefined' &&
-    window.matchMedia(
-      '(display-mode: standalone)'
-    ).matches
+  const [isStandalone, setIsStandalone] =
+    useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+
+    setIsIOS(
+      /iPad|iPhone|iPod/.test(
+        navigator.userAgent
+      )
+    )
+
+    setIsStandalone(
+      window.matchMedia(
+        '(display-mode: standalone)'
+      ).matches
+    )
+  }, [])
 
   useEffect(() => {
     const handler = (event: Event) => {
       event.preventDefault()
+
       setDeferredPrompt(
         event as BeforeInstallPromptEvent
       )
@@ -221,7 +235,13 @@ function InstallPrompt() {
     setDeferredPrompt(null)
   }
 
-  if (isStandalone) return null
+  if (!mounted) {
+    return null
+  }
+
+  if (isStandalone) {
+    return null
+  }
 
   return (
     <section>
