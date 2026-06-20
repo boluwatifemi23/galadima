@@ -1327,8 +1327,65 @@ p {
   margin-bottom: 10px;
 }
 
+
 @media (max-width: 480px) {
   .page-header {
     flex-direction: column;
   }
 }
+
+/* ─── Tabs ───────────────────────────────────────────────────────────────────── */
+
+.tab-bar {
+  display: flex;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.tab-btn {
+  padding: 10px 4px;
+  margin-right: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-neutral-500);
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ─── Responsive Utilities ───────────────────────────────────────────────────── */
+
+/* Tables can't be made fluid without breaking column alignment — let the
+   wrapper scroll horizontally on narrow screens instead of squeezing. */
+.card-body:has(> .data-table) {
+  overflow-x: auto;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Priority Badges ────────────────────────────────────────────────────────── */
+
+.badge-priority-critical { background: var(--color-primary-muted); color: var(--color-primary); }
+.badge-priority-urgent { background: var(--color-primary-muted); color: var(--color-primary-dark); }
+.badge-priority-high { background: var(--color-gold-muted); color: var(--color-gold); }
+.badge-priority-medium { background: var(--color-info-muted); color: var(--color-info); }
+.badge-priority-low { background: var(--color-neutral-100); color: var(--color-neutral-600); }
+.badge-priority-informational { background: var(--color-neutral-100); color: var(--color-neutral-500); }
+
+.badge-neutral { background: var(--color-neutral-100); color: var(--color-neutral-600); }

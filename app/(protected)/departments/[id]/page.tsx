@@ -77,7 +77,7 @@ export default function DepartmentDetailPage() {
         </span>
       </div>
 
-      <div className="dashboard-stats-grid" style={{ marginBottom: 20, gridTemplateColumns: "repeat(2, 1fr)" }}>
+        <div className="form-grid-2" style={{ marginBottom: 20 }}>
         <div className="stat-card">
           <p className="stat-label">Department Head</p>
           <p className="stat-value" style={{ fontSize: "1.25rem" }}>{department.head?.name || "Unassigned"}</p>

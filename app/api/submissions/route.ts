@@ -16,14 +16,17 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || String(DEFAULT_PAGE_SIZE));
   const status = searchParams.get("status");
 
+ const kpiId = searchParams.get("kpi");
   const query: Record<string, unknown> = {};
   if (status) query.status = status;
 
-  if (user!.role === "staff") {
+  if (kpiId) {
+    // A specific KPI was requested — the KPI detail page already gates who
+    // can see that KPI in the first place, so no extra scoping needed here.
+    query.kpi = kpiId;
+  } else if (user!.role === "staff") {
     query.employee = user!._id;
   } else if (user!.role === "department_head") {
-    // Submissions don't carry department directly — scope through this
-    // department head's KPIs.
     const deptKPIIds = await KPI.find({ department: user!.department }).select("_id");
     query.kpi = { $in: deptKPIIds.map((k) => k._id) };
   }
