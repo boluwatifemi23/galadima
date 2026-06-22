@@ -58,7 +58,7 @@ interface AssignEmployee {
 
 export default function KpisPage() {
   const { role, department } = useAuth();
-  const canManage = role === "super_admin" || role === "department_head" || role === "hr_admin";
+  const canManage = role === "super_admin" || role === "department_head";
   const [tab, setTab] = useState<"kpis" | "templates">("kpis");
 
   return (
@@ -125,6 +125,10 @@ function KPIsTab({ canManage }: { canManage: boolean }) {
           <option value="">All periods</option>
           {KPI_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.875rem" }}>
+          <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+          Show archived
+        </label>
         {canManage && <Link href="/kpis/create" className="btn btn-primary" style={{ marginLeft: "auto" }}>+ New KPI</Link>}
       </div>
 

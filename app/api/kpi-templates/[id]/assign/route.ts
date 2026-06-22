@@ -9,7 +9,7 @@ import { getKPIPeriod } from "@/lib/calculator";
 import KPITemplate from "@/lib/KPITemplate";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { user, error } = await requireRole(["super_admin", "department_head", "hr_admin"]);
+  const { user, error } = await requireRole(["super_admin", "department_head"]);
   if (error) return error;
 
   const { id } = await params;

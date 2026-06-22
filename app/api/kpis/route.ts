@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
 
   if (status) query.status = status;
   if (kpiType) query.kpiType = kpiType;
+  if (searchParams.get("archived") !== "true") query.isArchived = { $ne: true };
 
   const skip = (page - 1) * limit;
 
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireRole(["super_admin", "department_head", "hr_admin"]);
+  const { user, error } = await requireRole(["super_admin", "department_head"]);
   if (error) return error;
 
   try {

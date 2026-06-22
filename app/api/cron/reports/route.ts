@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { generateAndSendReport } from "@/lib/reports";
+import type { ReportType } from "@/lib/models/Report";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -11,25 +12,25 @@ export async function GET(req: NextRequest) {
   await connectDB();
   const now = new Date();
   const generated: string[] = [];
+  const failed: { type: string; error: string }[] = [];
 
-  if (now.getDay() === 1) { // Monday
-    await generateAndSendReport("weekly");
-    generated.push("weekly");
-  }
-
-  if (now.getDate() === 1) { // 1st of the month
-    await generateAndSendReport("monthly");
-    generated.push("monthly");
-
-    if ([0, 3, 6, 9].includes(now.getMonth())) {
-      await generateAndSendReport("quarterly");
-      generated.push("quarterly");
-    }
-    if (now.getMonth() === 0) {
-      await generateAndSendReport("annual");
-      generated.push("annual");
+  async function tryGenerate(type: ReportType) {
+    try {
+      await generateAndSendReport(type);
+      generated.push(type);
+    } catch (err: any) {
+      console.error(`[cron/reports] ${type} failed:`, err);
+      failed.push({ type, error: err.message || "unknown error" });
     }
   }
 
-  return NextResponse.json({ success: true, generated });
+  if (now.getDay() === 1) await tryGenerate("weekly");
+
+  if (now.getDate() === 1) {
+    await tryGenerate("monthly");
+    if ([0, 3, 6, 9].includes(now.getMonth())) await tryGenerate("quarterly");
+    if (now.getMonth() === 0) await tryGenerate("annual");
+  }
+
+  return NextResponse.json({ success: true, generated, failed });
 }

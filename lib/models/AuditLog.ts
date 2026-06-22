@@ -23,7 +23,7 @@ const AuditLogSchema = new Schema<IAuditLog>(
     performedBy: { type: String, default: "system" },
     category: {
       type: String,
-     enum: ["kpi", "submission", "template", "user", "department", "notification", "auth", "report"],
+    enum: ["kpi", "submission", "template", "user", "department", "notification", "auth", "report", "appraisal"],
       required: true,
     },
     action: { type: String, required: true },

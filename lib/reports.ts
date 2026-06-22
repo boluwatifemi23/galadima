@@ -142,16 +142,22 @@ export async function generateAndSendReport(reportType: ReportType, department?:
   const pdfBuffer = await htmlToPdfBuffer(html);
     const pdfUrl = await uploadBufferToCloudinary(pdfBuffer, "reports", `${reportType}-${Date.now()}`, "raw");
 
-  const superAdmins = await User.find({ role: "super_admin", isActive: true }).select("email");
+ const superAdmins = await User.find({ role: "super_admin", isActive: true }).select("email");
   const settings = await getSystemSettings();
   const recipients = [...new Set([...superAdmins.map((u) => u.email), ...settings.reportRecipientEmails])];
 
-  await sendEmail({
-    to: recipients,
-    subject: `${REPORT_LABELS[reportType]} — ${fmt(data.periodStart)} to ${fmt(data.periodEnd)}`,
-    html: `<p>Attached is the ${REPORT_LABELS[reportType].toLowerCase()} for Harmony Garden, covering ${fmt(data.periodStart)} – ${fmt(data.periodEnd)}.</p>`,
-    attachments: [{ filename: `${reportType}-report.pdf`, content: pdfBuffer, type: "application/pdf" }],
-  });
+  let emailSent = false;
+  if (recipients.length === 0) {
+    console.warn(`[reports] No recipients configured for ${reportType} report — skipping email send`);
+  } else {
+    const sendResult = await sendEmail({
+      to: recipients,
+      subject: `${REPORT_LABELS[reportType]} — ${fmt(data.periodStart)} to ${fmt(data.periodEnd)}`,
+      html: `<p>Attached is the ${REPORT_LABELS[reportType].toLowerCase()} for Harmony Garden, covering ${fmt(data.periodStart)} – ${fmt(data.periodEnd)}.</p>`,
+      attachments: [{ filename: `${reportType}-report.pdf`, content: pdfBuffer, type: "application/pdf" }],
+    });
+    emailSent = sendResult.sent;
+  }
 
   const report = await Report.create({
     reportType,
@@ -160,6 +166,8 @@ export async function generateAndSendReport(reportType: ReportType, department?:
     generatedBy: generatedByUserId,
     recipientEmails: recipients,
     pdfUrl,
+    sheetUrl,
+    emailSent,
     summary: data,
   });
 

@@ -7,7 +7,7 @@ import { createAuditLog } from "@/lib/audit";
 import { getKPIPeriod } from "@/lib/calculator";
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireRole(["super_admin", "department_head", "hr_admin"]);
+ const { user, error } = await requireRole(["super_admin", "department_head"]);
   if (error) return error;
 
   const { rows } = await req.json();

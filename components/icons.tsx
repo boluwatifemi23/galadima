@@ -155,6 +155,15 @@ export function IconUpload({ className, size = 20 }: IconProps) {
   );
 }
 
+export function IconAward({ className, size = 20 }: IconProps) {
+  return (
+    <svg width={size} height={size} className={className} {...base}>
+      <circle cx="12" cy="8" r="6" />
+      <path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5" />
+    </svg>
+  );
+}
+
 export function IconLogOut({ className, size = 20 }: IconProps) {
   return (
     <svg width={size} height={size} className={className} {...base}>

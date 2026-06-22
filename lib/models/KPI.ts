@@ -25,6 +25,7 @@ export interface IKPI extends Document {
   approvedAt?: Date;
   rejectionReason?: string;
   notes?: string;
+  isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,6 +68,7 @@ const KPISchema = new Schema<IKPI>(
     approvedAt: { type: Date },
     rejectionReason: { type: String, trim: true },
     notes: { type: String, trim: true },
+    isArchived: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -180,9 +180,13 @@ export default function ReportsPage() {
                   <tr key={r._id}>
                     <td style={{ textTransform: "capitalize" }}>{r.reportType}</td>
                     <td>{formatDate(r.periodStart)} – {formatDate(r.periodEnd)}</td>
-                    <td>{r.recipientEmails.length}</td>
+                   <td>{r.recipientEmails.length}</td>
                     <td>{r.generatedBy?.name || "Automated"}</td>
-                    <td>{r.pdfUrl && <a href={r.pdfUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Download</a>}</td>
+                    <td style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      {r.pdfUrl && <a href={r.pdfUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">PDF</a>}
+                      {r.sheetUrl && <a href={r.sheetUrl} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Sheet</a>}
+                      {!r.emailSent && <span className="badge badge-rejected" title="No recipients configured, or the send failed">Not Emailed</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

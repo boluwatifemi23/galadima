@@ -20,7 +20,7 @@ interface Submission {
 
 export default function SubmissionsPage() {
   const { role } = useAuth();
-  const canReview = role === "super_admin" || role === "department_head" || role === "hr_admin";
+    const canReview = role === "super_admin" || role === "department_head";
 
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);

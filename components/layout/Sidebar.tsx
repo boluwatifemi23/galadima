@@ -7,7 +7,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { NAV_ITEMS, ROLE_LABELS } from "@/lib/constants";
 import {
   IconDashboard, IconBuilding, IconUsers, IconTarget, IconFileCheck,
-  IconBell, IconMegaphone, IconHistory, IconShield, IconReport,
+  IconBell, IconMegaphone, IconHistory, IconShield, IconReport, IconAward,
 } from "@/components/icons";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
@@ -16,6 +16,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string; size?: 
   "/employees": IconUsers,
   "/kpis": IconTarget,
   "/submissions": IconFileCheck,
+  "/appraisals": IconAward,
   "/alerts": IconBell,
   "/broadcast": IconMegaphone,
   "/reports": IconReport,

@@ -9,6 +9,8 @@ export interface IReport extends Document {
   generatedBy?: mongoose.Types.ObjectId; // omitted for automated reports
   recipientEmails: string[];
   pdfUrl?: string;
+  sheetUrl?: string;
+  emailSent: boolean;
   summary?: Record<string, unknown>;
   createdAt: Date;
 }
@@ -21,6 +23,8 @@ const ReportSchema = new Schema<IReport>(
     generatedBy: { type: Schema.Types.ObjectId, ref: "User" },
     recipientEmails: { type: [String], default: [] },
     pdfUrl: { type: String },
+    sheetUrl: { type: String },
+    emailSent: { type: Boolean, default: false },
     summary: { type: Schema.Types.Mixed },
   },
   { timestamps: { createdAt: true, updatedAt: false } }

@@ -75,6 +75,8 @@ export default function KpiDetailPage() {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cloning, setCloning] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -192,7 +194,44 @@ export default function KpiDetailPage() {
     }
   }
 
+  async function handleClone() {
+    setCloning(true);
+    try {
+      const res = await fetch(`/api/kpis/${id}/clone`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error || "Could not clone KPI");
+        return;
+      }
+      toast.success("KPI cloned for the next period");
+      router.push(`/kpis/${json.kpi._id}`);
+    } catch {
+      toast.error("Could not reach the server");
+    } finally {
+      setCloning(false);
+    }
+  }
+
+   async function handleArchive() {
+    setArchiving(true);
+    try {
+      const res = await fetch(`/api/kpis/${id}/archive`, { method: "PATCH" });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error || "Could not update KPI");
+        return;
+      }
+      toast.success(json.kpi.isArchived ? "KPI archived" : "KPI unarchived");
+      load();
+    } catch {
+      toast.error("Could not reach the server");
+    } finally {
+      setArchiving(false);
+    }
+  }
+
   async function handleDelete() {
+
     setDeleting(true);
     try {
       const res = await fetch(`/api/kpis/${id}`, { method: "DELETE" });
@@ -221,9 +260,12 @@ export default function KpiDetailPage() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <StatusBadge status={kpi.isOverdue ? "overdue" : kpi.status} />
+          {kpi.isArchived && <span className="badge badge-neutral">Archived</span>}
           {canManage && (
             <>
               <button className="btn btn-secondary btn-sm" onClick={() => setEditOpen(true)}>Edit</button>
+              <button className="btn btn-secondary btn-sm" onClick={handleClone} disabled={cloning}>{cloning ? "Cloning…" : "Clone"}</button>
+              <button className="btn btn-secondary btn-sm" onClick={handleArchive} disabled={archiving}>{archiving ? "…" : kpi.isArchived ? "Unarchive" : "Archive"}</button>
               <button className="btn btn-ghost btn-sm" style={{ color: "var(--color-primary)" }} onClick={() => setDeleteOpen(true)}>Delete</button>
             </>
           )}
