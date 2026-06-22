@@ -176,17 +176,32 @@ export default function ProfilePage() {
         <form onSubmit={handleProfileSave} className="card-body">
           <div className="form-group">
             <label className="form-label">Full Name</label>
-            <input className="form-input" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} />
+            <input 
+              className="form-input" 
+              placeholder="Enter your full name"
+              value={profileForm.name} 
+              onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} 
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Phone</label>
-            <input className="form-input" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} />
+            <input 
+              className="form-input" 
+              placeholder="Enter your phone number"
+              value={profileForm.phone} 
+              onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} 
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Email</label>
             <input
-            title="Your Email Address"
-             className="form-input" value={user.email} disabled style={{ opacity: 0.6 }} />
+              placeholder="Your email address"
+              title="Your Email Address"
+              className="form-input" 
+              value={user.email} 
+              disabled 
+              style={{ opacity: 0.6 }} 
+            />
             <p className="form-hint">Contact an admin to change your email.</p>
           </div>
           <button type="submit" className="btn btn-primary" disabled={savingProfile}>
@@ -200,16 +215,34 @@ export default function ProfilePage() {
         <form onSubmit={handlePasswordChange} className="card-body">
           <div className="form-group">
             <label className="form-label required">Current Password</label>
-            <input type="password" className="form-input" value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+            <input 
+              type="password" 
+              className="form-input" 
+              placeholder="Enter your current password"
+              value={pwForm.currentPassword} 
+              onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} 
+            />
           </div>
           <div className="form-group">
             <label className="form-label required">New Password</label>
-            <input type="password" className="form-input" value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+            <input 
+              type="password" 
+              className="form-input" 
+              placeholder="Enter your new password"
+              value={pwForm.newPassword} 
+              onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} 
+            />
             <p className="form-hint">At least 8 characters.</p>
           </div>
           <div className="form-group">
             <label className="form-label required">Confirm New Password</label>
-            <input type="password" className="form-input" value={pwForm.confirmPassword} onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
+            <input 
+              type="password" 
+              className="form-input" 
+              placeholder="Confirm your new password"
+              value={pwForm.confirmPassword} 
+              onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })} 
+            />
           </div>
           <button type="submit" className="btn btn-primary" disabled={changingPw}>
             {changingPw ? <span className="spinner" style={{ width: 14, height: 14 }} /> : "Update Password"}

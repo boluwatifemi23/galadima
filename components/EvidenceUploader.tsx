@@ -56,7 +56,9 @@ export default function EvidenceUploader({ files, onChange }: { files: UploadedF
 
   return (
     <div>
-      <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.mp4,.xlsx,.docx" onChange={handleFileSelect} disabled={uploading} className="form-input" style={{ padding: 8 }} />
+      <input
+      title="Upload Evidence"
+       type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.mp4,.xlsx,.docx" onChange={handleFileSelect} disabled={uploading} className="form-input" style={{ padding: 8 }} />
       {uploading && (
         <p style={{ fontSize: "0.8125rem", color: "var(--color-neutral-500)", marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
           <span className="spinner" style={{ width: 14, height: 14 }} /> Uploading…

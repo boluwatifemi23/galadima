@@ -93,12 +93,14 @@ function KPIsTab({ canManage }: { canManage: boolean }) {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
   const [kpiType, setKpiType] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (status) params.set("status", status);
       if (kpiType) params.set("kpiType", kpiType);
+      if (showArchived) params.set("archived", "true");
       params.set("limit", "50");
       const res = await fetch(`/api/kpis?${params.toString()}`);
       const json = await res.json();
@@ -106,7 +108,7 @@ function KPIsTab({ canManage }: { canManage: boolean }) {
     } finally {
       setLoading(false);
     }
-  }, [status, kpiType]);
+  }, [status, kpiType, showArchived]);
 
   useEffect(() => { load(); }, [load]);
 

@@ -23,7 +23,7 @@ const ROLE_LOOKUP: Record<string, UserRole> = {
   "hr/admin": "hr_admin",
 };
 
-export function parseEmployeeRow(raw: Record<string, any>, rowIndex: number): EmployeeImportRow {
+export function parseEmployeeRow(raw: Record<string, string | number | boolean | null | undefined>, rowIndex: number): EmployeeImportRow {
   const errors: string[] = [];
 
   const name = String(raw["Full Name"] || raw["Name"] || "").trim();
@@ -60,7 +60,7 @@ const CATEGORY_VALUES = ["productivity", "revenue", "operational", "quality", "i
 const FORMULA_VALUES = ["standard", "reverse", "binary", "weighted", "growth"];
 const KPI_TYPE_VALUES = ["weekly", "monthly", "quarterly", "annual"];
 
-export function parseKPIRow(raw: Record<string, any>, rowIndex: number): KPIImportRow {
+export function parseKPIRow(raw: Record<string, string | number | boolean | null | undefined>, rowIndex: number): KPIImportRow {
   const errors: string[] = [];
 
   const employeeEmail = String(raw["Employee Email"] || "").trim().toLowerCase();

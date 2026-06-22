@@ -42,6 +42,7 @@ interface KpiDetail {
   rejectionReason?: string;
   notes?: string;
   isOverdue: boolean;
+   isArchived: boolean;
 }
 
 interface Submission {

@@ -6,6 +6,19 @@ import { useAuth } from "@/providers/AuthProvider";
 import { DEPARTMENTS } from "@/lib/types";
 import EmptyState from "@/components/EmptyState";
 import { formatDate } from "@/lib/constants";
+import type { ReportType } from "@/lib/models/Report";
+
+interface ReportHistoryItem {
+  _id: string;
+  reportType: ReportType;
+  periodStart: string;
+  periodEnd: string;
+  recipientEmails: string[];
+  generatedBy?: { name: string };
+  pdfUrl?: string;
+  sheetUrl?: string;
+  emailSent: boolean;
+}
 
 const REPORT_TYPES = [
   { value: "weekly", label: "Weekly" },
@@ -18,7 +31,7 @@ export default function ReportsPage() {
   const { role } = useAuth();
   const isSuperAdmin = role === "super_admin";
 
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<ReportHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [generateForm, setGenerateForm] = useState({ reportType: "weekly", department: "" });
   const [generating, setGenerating] = useState(false);
@@ -39,7 +52,13 @@ export default function ReportsPage() {
   }
 
   useEffect(() => {
-    load();
+    fetch("/api/reports")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) setHistory(json.reports);
+      })
+      .finally(() => setLoading(false));
+
     if (isSuperAdmin) {
       fetch("/api/reports/settings").then((res) => res.json()).then((json) => json.success && setRecipients(json.reportRecipientEmails));
     }
@@ -106,13 +125,17 @@ export default function ReportsPage() {
         <form onSubmit={handleGenerate} className="card-body form-grid-2">
           <div className="form-group">
             <label className="form-label">Report Type</label>
-            <select className="form-select" value={generateForm.reportType} onChange={(e) => setGenerateForm({ ...generateForm, reportType: e.target.value })}>
+            <select
+                title="Report Type"
+             className="form-select" value={generateForm.reportType} onChange={(e) => setGenerateForm({ ...generateForm, reportType: e.target.value })}>
               {REPORT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label className="form-label">Department (optional)</label>
-            <select className="form-select" value={generateForm.department} onChange={(e) => setGenerateForm({ ...generateForm, department: e.target.value })}>
+            <select
+                title="Department"
+             className="form-select" value={generateForm.department} onChange={(e) => setGenerateForm({ ...generateForm, department: e.target.value })}>
               <option value="">Whole company</option>
               {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>

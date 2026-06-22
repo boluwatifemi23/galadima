@@ -18,9 +18,9 @@ export async function GET(req: NextRequest) {
     try {
       await generateAndSendReport(type);
       generated.push(type);
-    } catch (err: any) {
+    } catch (err) {
       console.error(`[cron/reports] ${type} failed:`, err);
-      failed.push({ type, error: err.message || "unknown error" });
+      failed.push({ type, error: err instanceof Error ? err.message : "unknown error" });
     }
   }
 

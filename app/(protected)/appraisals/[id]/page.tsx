@@ -8,8 +8,29 @@ import RatingBadge from "@/components/RatingBadge";
 import PerformanceBar from "@/components/PerformanceBar";
 import EmptyState from "@/components/EmptyState";
 import { formatDate } from "@/lib/constants";
+import type { PerformanceRating } from "@/lib/types";
 
-const WEIGHTED_LABELS = [
+interface AppraisalDetail {
+  _id: string;
+  employee: { _id: string; name: string; employeeId: string; department: string };
+  periodStart: string;
+  periodEnd: string;
+  kpiScore: number;
+  attendanceScore: number;
+  complianceScore: number;
+  managerReviewScore: number;
+  peerReviewScore: number;
+  totalScore: number;
+  rating: PerformanceRating;
+  managerNotes?: string;
+  promotionRecommended: boolean;
+  bonusRecommended: boolean;
+  bonusNotes?: string;
+}
+
+type ScoreField = "kpiScore" | "attendanceScore" | "complianceScore" | "managerReviewScore" | "peerReviewScore";
+
+const WEIGHTED_LABELS: { key: ScoreField; label: string; weight: number }[] = [
   { key: "kpiScore", label: "KPI Performance", weight: 60 },
   { key: "attendanceScore", label: "Attendance", weight: 10 },
   { key: "complianceScore", label: "Compliance", weight: 10 },
@@ -19,7 +40,7 @@ const WEIGHTED_LABELS = [
 
 export default function AppraisalDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [appraisal, setAppraisal] = useState<any>(null);
+  const [appraisal, setAppraisal] = useState<AppraisalDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

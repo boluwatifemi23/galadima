@@ -54,9 +54,9 @@ export async function POST(req: NextRequest) {
         status: "pending",
       });
       created += 1;
-    } catch (err: any) {
+    } catch (err) {
       skipped += 1;
-      errors.push(`Row ${row.rowIndex}: ${err.message || "could not create KPI"}`);
+      errors.push(`Row ${row.rowIndex}: ${err instanceof Error ? err.message : "could not create KPI"}`);
     }
   }
 

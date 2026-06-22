@@ -8,16 +8,33 @@ import RatingBadge from "@/components/RatingBadge";
 import EmptyState from "@/components/EmptyState";
 import Modal from "@/components/Modal";
 import { formatDate } from "@/lib/constants";
+import type { PerformanceRating } from "@/lib/types";
+
+interface AppraisalListItem {
+  _id: string;
+  employee?: { name: string };
+  periodStart: string;
+  periodEnd: string;
+  kpiScore: number;
+  totalScore: number;
+  rating: PerformanceRating;
+}
+
+interface EmployeeOption {
+  _id: string;
+  name: string;
+  department: string;
+}
 
 export default function AppraisalsPage() {
   const { role, department } = useAuth();
   const canCreate = role === "super_admin" || role === "hr_admin" || role === "department_head";
 
-  const [appraisals, setAppraisals] = useState<any[]>([]);
+  const [appraisals, setAppraisals] = useState<AppraisalListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [form, setForm] = useState({
     employeeId: "", periodStart: "", periodEnd: "",
     attendanceScore: 100, complianceScore: 100, managerReviewScore: 80, peerReviewScore: 80,
@@ -37,12 +54,18 @@ export default function AppraisalsPage() {
   }
 
   useEffect(() => {
-    load();
+    fetch("/api/appraisals?limit=50")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) setAppraisals(json.appraisals);
+      })
+      .finally(() => setLoading(false));
+
     if (canCreate) {
       const params = role === "department_head" ? `?department=${encodeURIComponent(department)}` : "";
       fetch(`/api/users${params}`).then((res) => res.json()).then((json) => json.success && setEmployees(json.users));
     }
-  }, [canCreate]);
+  }, [canCreate, role, department]);
 
   function openCreate() {
     const now = new Date();
@@ -134,7 +157,9 @@ export default function AppraisalsPage() {
           <form onSubmit={handleSave}>
             <div className="form-group">
               <label className="form-label required">Employee</label>
-              <select className="form-select" value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })}>
+              <select
+              title="Employee"
+               className="form-select" value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })}>
                 <option value="">Select employee</option>
                 {employees.map((emp) => <option key={emp._id} value={emp._id}>{emp.name} — {emp.department}</option>)}
               </select>
@@ -142,11 +167,15 @@ export default function AppraisalsPage() {
             <div className="form-grid-2">
               <div className="form-group">
                 <label className="form-label required">Period Start</label>
-                <input type="date" className="form-input" value={form.periodStart} onChange={(e) => setForm({ ...form, periodStart: e.target.value })} />
+                <input
+                title="Period Start"
+                 type="date" className="form-input" value={form.periodStart} onChange={(e) => setForm({ ...form, periodStart: e.target.value })} />
               </div>
               <div className="form-group">
                 <label className="form-label required">Period End</label>
-                <input type="date" className="form-input" value={form.periodEnd} onChange={(e) => setForm({ ...form, periodEnd: e.target.value })} />
+                <input
+                title="Period End"
+                 type="date" className="form-input" value={form.periodEnd} onChange={(e) => setForm({ ...form, periodEnd: e.target.value })} />
               </div>
             </div>
             <p className="form-hint" style={{ marginBottom: 12 }}>
@@ -155,24 +184,35 @@ export default function AppraisalsPage() {
             <div className="form-grid-2">
               <div className="form-group">
                 <label className="form-label">Attendance (10%)</label>
-                <input type="number" min={0} max={100} className="form-input" value={form.attendanceScore} onChange={(e) => setForm({ ...form, attendanceScore: Number(e.target.value) })} />
+                <input
+                title="Attendance"
+                 type="number" min={0} max={100} className="form-input" value={form.attendanceScore} onChange={(e) => setForm({ ...form, attendanceScore: Number(e.target.value) })} />
+                
               </div>
               <div className="form-group">
                 <label className="form-label">Compliance (10%)</label>
-                <input type="number" min={0} max={100} className="form-input" value={form.complianceScore} onChange={(e) => setForm({ ...form, complianceScore: Number(e.target.value) })} />
+                <input
+                title="Compliance"
+                 type="number" min={0} max={100} className="form-input" value={form.complianceScore} onChange={(e) => setForm({ ...form, complianceScore: Number(e.target.value) })} />
               </div>
               <div className="form-group">
                 <label className="form-label">Manager Review (10%)</label>
-                <input type="number" min={0} max={100} className="form-input" value={form.managerReviewScore} onChange={(e) => setForm({ ...form, managerReviewScore: Number(e.target.value) })} />
+                <input
+                title="Manager Review"
+                 type="number" min={0} max={100} className="form-input" value={form.managerReviewScore} onChange={(e) => setForm({ ...form, managerReviewScore: Number(e.target.value) })} />
               </div>
               <div className="form-group">
                 <label className="form-label">Peer Review (10%)</label>
-                <input type="number" min={0} max={100} className="form-input" value={form.peerReviewScore} onChange={(e) => setForm({ ...form, peerReviewScore: Number(e.target.value) })} />
+                <input
+                title="Peer Review"
+                 type="number" min={0} max={100} className="form-input" value={form.peerReviewScore} onChange={(e) => setForm({ ...form, peerReviewScore: Number(e.target.value) })} />
               </div>
             </div>
             <div className="form-group">
               <label className="form-label">Manager Notes</label>
-              <textarea className="form-textarea" value={form.managerNotes} onChange={(e) => setForm({ ...form, managerNotes: e.target.value })} />
+              <textarea
+                title="Manager Notes"
+               className="form-textarea" value={form.managerNotes} onChange={(e) => setForm({ ...form, managerNotes: e.target.value })} />
             </div>
             <div className="form-grid-2">
               <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.875rem" }}>
@@ -187,7 +227,9 @@ export default function AppraisalsPage() {
             {form.bonusRecommended && (
               <div className="form-group">
                 <label className="form-label">Bonus Notes</label>
-                <textarea className="form-textarea" value={form.bonusNotes} onChange={(e) => setForm({ ...form, bonusNotes: e.target.value })} />
+                <textarea
+                  title="Bonus Notes"
+                  className="form-textarea" value={form.bonusNotes} onChange={(e) => setForm({ ...form, bonusNotes: e.target.value })} />
               </div>
             )}
           </form>

@@ -6,13 +6,64 @@ import { requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
 import { generateTemporaryPassword } from "@/lib/constants";
 
-export async function POST(req: NextRequest) {
-  const { user, error } = await requireRole(["super_admin", "hr_admin"]);
-  if (error) return error;
+type UserRole = "super_admin" | "department_head" | "staff" | "hr_admin";
 
-  const { rows } = await req.json();
+const VALID_ROLES: ReadonlyArray<UserRole> = [
+  "super_admin",
+  "department_head",
+  "staff",
+  "hr_admin",
+];
+
+interface BulkImportRow {
+  rowIndex: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  department: string;
+}
+
+interface NewAccount {
+  name: string;
+  email: string;
+  temporaryPassword: string;
+}
+
+interface BulkImportResult {
+  success: boolean;
+  result: {
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: string[];
+    newAccounts: NewAccount[];
+  };
+}
+
+interface ErrorResponse {
+  success: boolean;
+  error: string;
+}
+
+function isValidRole(role: string): role is UserRole {
+  return VALID_ROLES.includes(role as UserRole);
+}
+
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse<BulkImportResult | ErrorResponse>> {
+  const { user, error } = await requireRole(["super_admin", "hr_admin"]);
+  if (error) return error as NextResponse<ErrorResponse>;
+
+  const requestData = (await req.json()) as { rows: unknown };
+  const rows = requestData.rows as BulkImportRow[];
+
   if (!Array.isArray(rows) || rows.length === 0) {
-    return NextResponse.json({ success: false, error: "No rows provided" }, { status: 400 });
+    return NextResponse.json<ErrorResponse>(
+      { success: false, error: "No rows provided" },
+      { status: 400 }
+    );
   }
 
   await connectDB();
@@ -21,7 +72,7 @@ export async function POST(req: NextRequest) {
   let updated = 0;
   let skipped = 0;
   const errors: string[] = [];
-  const newAccounts: { name: string; email: string; temporaryPassword: string }[] = [];
+  const newAccounts: NewAccount[] = [];
 
   for (const row of rows) {
     if (!row.name || !row.email || !row.role || !row.department) {
@@ -30,25 +81,54 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
+    if (!isValidRole(row.role)) {
+      skipped += 1;
+      errors.push(
+        `Row ${row.rowIndex}: invalid role "${row.role}". Must be one of: ${VALID_ROLES.join(", ")}`
+      );
+      continue;
+    }
+
     try {
       const existing = await User.findOne({ email: row.email });
+
       if (existing) {
         existing.name = row.name;
         existing.phone = row.phone || existing.phone;
         existing.department = row.department;
+        existing.role = row.role;
         await existing.save();
         updated += 1;
       } else {
-        const employeeId = await (User as any).generateEmployeeId();
+        const employeeId = (await User.generateEmployeeId()) as string;
         const tempPassword = generateTemporaryPassword();
         const passwordHash = await hashPassword(tempPassword);
-        await User.create({ employeeId, name: row.name, email: row.email, phone: row.phone, role: row.role, department: row.department, passwordHash, isActive: true });
+
+        await User.create({
+          employeeId,
+          name: row.name,
+          email: row.email,
+          phone: row.phone,
+          role: row.role,
+          department: row.department,
+          passwordHash,
+          isActive: true,
+        });
+
         created += 1;
-        newAccounts.push({ name: row.name, email: row.email, temporaryPassword: tempPassword });
+        newAccounts.push({
+          name: row.name,
+          email: row.email,
+          temporaryPassword: tempPassword,
+        });
       }
-    } catch (err: any) {
+    } catch (err) {
       skipped += 1;
-      errors.push(`Row ${row.rowIndex} (${row.email}): ${err.message || "could not save"}`);
+      const errorMessage =
+        err instanceof Error ? err.message : "could not save";
+      errors.push(
+        `Row ${row.rowIndex} (${row.email}): ${errorMessage}`
+      );
     }
   }
 
@@ -60,5 +140,8 @@ export async function POST(req: NextRequest) {
     metadata: { created, updated, skipped, totalRows: rows.length },
   });
 
-  return NextResponse.json({ success: true, result: { created, updated, skipped, errors, newAccounts } });
+  return NextResponse.json<BulkImportResult>({
+    success: true,
+    result: { created, updated, skipped, errors, newAccounts },
+  });
 }

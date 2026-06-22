@@ -15,6 +15,9 @@ interface ImportResult {
   newAccounts?: { name: string; email: string; temporaryPassword: string }[];
 }
 
+// Add this type for raw Excel data
+type RawExcelRow = Record<string, string | number | boolean | null | undefined>;
+
 const TEMPLATES: Record<string, { headers: string[]; sample: Record<string, string> }> = {
   employees: {
     headers: ["Full Name", "Email", "Phone", "Role", "Department"],
@@ -71,7 +74,7 @@ export default function BulkImportUploader({ type }: { type: "employees" | "kpis
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+      const json = XLSX.utils.sheet_to_json<RawExcelRow>(sheet, { defval: "" });
 
       const parsed = json.map((raw, i) => (type === "employees" ? parseEmployeeRow(raw, i + 2) : parseKPIRow(raw, i + 2)));
       setRows(parsed);
