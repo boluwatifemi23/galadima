@@ -1,11 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
 import StatCard from "@/components/StatCard";
 import PriorityBadge from "@/components/PriorityBadge";
 import EmptyState from "@/components/EmptyState";
+
+interface Notification {
+  _id: string;
+  title: string;
+  message: string;
+  priority: string;
+  source: string;
+  createdAt: string;
+  acknowledged: boolean;
+  escalated: boolean;
+}
+
+interface NotificationStats {
+  total: number;
+  critical: number;
+  unacknowledged: number;
+  escalated: number;
+}
 
 function timeAgo(date: string) {
   const mins = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
@@ -20,15 +38,14 @@ export default function AlertsPage() {
   const { role } = useAuth();
   const canEscalate = role === "super_admin" || role === "department_head" || role === "hr_admin";
 
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [stats, setStats] = useState({ total: 0, critical: 0, unacknowledged: 0, escalated: 0 });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [stats, setStats] = useState<NotificationStats>({ total: 0, critical: 0, unacknowledged: 0, escalated: 0 });
   const [loading, setLoading] = useState(true);
   const [priority, setPriority] = useState("");
   const [ackFilter, setAckFilter] = useState("");
   const [actingId, setActingId] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (priority) params.set("priority", priority);
@@ -43,9 +60,9 @@ export default function AlertsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [priority, ackFilter]);
 
-  useEffect(() => { load(); }, [priority, ackFilter]);
+  useEffect(() => { load(); }, [load]);
 
   async function handleAcknowledge(id: string) {
     setActingId(id);
@@ -104,11 +121,15 @@ export default function AlertsPage() {
       </div>
 
       <div className="filter-bar">
-        <select className="form-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
+        <select
+        title="Filter by Priority"
+         className="form-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
           <option value="">All priorities</option>
           {["Critical", "Urgent", "High", "Medium", "Low", "Informational"].map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select className="form-select" value={ackFilter} onChange={(e) => setAckFilter(e.target.value)}>
+        <select
+         title="Filter by Acknowledgment"
+         className="form-select" value={ackFilter} onChange={(e) => setAckFilter(e.target.value)}>
           <option value="">All</option>
           <option value="false">Unacknowledged</option>
           <option value="true">Acknowledged</option>

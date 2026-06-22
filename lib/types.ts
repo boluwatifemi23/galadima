@@ -57,4 +57,4 @@ export type NotificationSource = "Freshservice" | "Freshsales" | "Freshdesk" | "
 export type NotificationStatus = "sent" | "delivered" | "read" | "acknowledged";
 
 // ─── Audit domain ───
-export type AuditCategory = "kpi" | "submission" | "template" | "user" | "department" | "notification" | "auth";
+export type AuditCategory = "kpi" | "submission" | "template" | "user" | "department" | "notification" | "auth" | "report";

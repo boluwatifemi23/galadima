@@ -8,6 +8,12 @@ import { useAuth } from "@/providers/AuthProvider";
 import { DEPARTMENTS } from "@/lib/types";
 import { CATEGORIES, FORMULAS, KPI_TYPES } from "@/lib/kpiOptions";
 
+
+interface Employee {
+  _id: string;
+  name: string;
+}
+
 export default function CreateKpiPage() {
   const router = useRouter();
   const { role, department } = useAuth();
@@ -20,12 +26,12 @@ export default function CreateKpiPage() {
     weight: 10, targetValue: 100, evidenceRequired: false,
     dueDate: "", notes: "",
   });
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!form.department) {
-      setEmployees([]);
+      Promise.resolve().then(() => setEmployees([]));
       return;
     }
     fetch(`/api/users?department=${encodeURIComponent(form.department)}&role=staff`)

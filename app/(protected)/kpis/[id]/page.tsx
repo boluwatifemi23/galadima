@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -10,18 +10,59 @@ import PerformanceBar from "@/components/PerformanceBar";
 import EmptyState from "@/components/EmptyState";
 import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import EvidenceUploader from "@/components/EvidenceUploader";
 import { formatDate } from "@/lib/constants";
+
+interface KpiEmployee {
+  _id: string;
+  name: string;
+  email: string;
+  employeeId: string;
+  department: string;
+}
+
+interface KpiDetail {
+  _id: string;
+  name: string;
+  description?: string;
+  department: string;
+  employee: KpiEmployee;
+  assignedBy?: { _id: string; name: string };
+  category: string;
+  formula: string;
+  kpiType: string;
+  weight: number;
+  targetValue: number;
+  actualValue?: number;
+  achievementPercent?: number;
+  weightedScore?: number;
+  status: string;
+  evidenceRequired: boolean;
+  dueDate: string;
+  rejectionReason?: string;
+  notes?: string;
+  isOverdue: boolean;
+}
+
+interface Submission {
+  _id: string;
+  submittedValue: number;
+  notes?: string;
+  evidenceUrls: string[];
+  status: string;
+  submittedAt: string;
+}
 
 export default function KpiDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const user = useAuth();
 
-  const [kpi, setKpi] = useState<any>(null);
-  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [kpi, setKpi] = useState<KpiDetail | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [submitForm, setSubmitForm] = useState({ submittedValue: "", notes: "", evidenceUrls: "" });
+  const [submitForm, setSubmitForm] = useState<{ submittedValue: string; notes: string; evidenceFiles: { url: string; name: string }[] }>({ submittedValue: "", notes: "", evidenceFiles: [] });
   const [submitting, setSubmitting] = useState(false);
 
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -35,8 +76,7 @@ export default function KpiDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
       const [kpiRes, subRes] = await Promise.all([fetch(`/api/kpis/${id}`), fetch(`/api/submissions?kpi=${id}`)]);
       const kpiJson = await kpiRes.json();
@@ -57,9 +97,9 @@ export default function KpiDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load(); }, [load]);
 
   if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}><span className="spinner" /></div>;
   if (!kpi) return <EmptyState title="KPI not found" text="It may have been deleted." />;
@@ -73,20 +113,21 @@ export default function KpiDetailPage() {
 
   async function handleSubmitProgress(e: React.FormEvent) {
     e.preventDefault();
-    if (!submitForm.submittedValue) {
-      toast.error("Enter the value you're reporting");
+    if (!kpi || !submitForm.submittedValue) {
+      if (!submitForm.submittedValue) toast.error("Enter the value you're reporting");
       return;
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/submissions", {
+    const res = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kpiId: kpi._id,
           submittedValue: Number(submitForm.submittedValue),
           notes: submitForm.notes,
-          evidenceUrls: submitForm.evidenceUrls ? submitForm.evidenceUrls.split(",").map((s) => s.trim()).filter(Boolean) : [],
+          evidenceUrls: submitForm.evidenceFiles.map((f) => f.url),
+          evidenceFileNames: submitForm.evidenceFiles.map((f) => f.name),
         }),
       });
       const json = await res.json();
@@ -94,8 +135,8 @@ export default function KpiDetailPage() {
         toast.error(json.error || "Could not submit progress");
         return;
       }
-      toast.success("Progress submitted for review");
-      setSubmitForm({ submittedValue: "", notes: "", evidenceUrls: "" });
+        toast.success("Progress submitted for review");
+      setSubmitForm({ submittedValue: "", notes: "", evidenceFiles: [] });
       load();
     } catch {
       toast.error("Could not reach the server");
@@ -237,9 +278,10 @@ export default function KpiDetailPage() {
               <label className="form-label">Notes</label>
               <textarea title="Enter any additional notes for this submission" className="form-textarea" value={submitForm.notes} onChange={(e) => setSubmitForm({ ...submitForm, notes: e.target.value })} />
             </div>
-            <div className="form-group">
-              <label className="form-label">{kpi.evidenceRequired ? "Evidence links" : "Evidence links (optional)"}</label>
-              <input className="form-input" placeholder="Paste links, separated by commas" value={submitForm.evidenceUrls} onChange={(e) => setSubmitForm({ ...submitForm, evidenceUrls: e.target.value })} />
+           <div className="form-group">
+              <label className="form-label">{kpi.evidenceRequired ? "Evidence" : "Evidence (optional)"}</label>
+              <EvidenceUploader files={submitForm.evidenceFiles} onChange={(files) => setSubmitForm({ ...submitForm, evidenceFiles: files })} />
+              <p className="form-hint">PDF, JPG, PNG, MP4, XLSX, or DOCX — up to 100MB each.</p>
             </div>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? <span className="spinner" style={{ width: 14, height: 14 }} /> : "Submit for Review"}

@@ -1,44 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import EmptyState from "@/components/EmptyState";
 
 const CATEGORIES = ["kpi", "submission", "template", "user", "department", "notification", "auth"];
+
+interface AuditLog {
+  _id: string;
+  createdAt: string;
+  user?: { name: string };
+  category: string;
+  action: string;
+  resourceType: string;
+}
 
 function humanizeAction(action: string) {
   return action.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
 export default function AuditPage() {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ totalPages: 1 });
 
-  async function load() {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (category) params.set("category", category);
-      params.set("page", String(page));
-      const res = await fetch(`/api/audit?${params.toString()}`);
-      const json = await res.json();
-      if (!json.success) {
-        setError(json.error || "Could not load audit log");
-        return;
-      }
-      setLogs(json.logs);
-      setPagination(json.pagination);
-    } catch {
-      setError("Could not reach the server");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const load = useCallback(() => {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    params.set("page", String(page));
+    fetch(`/api/audit?${params.toString()}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!json.success) {
+          setError(json.error || "Could not load audit log");
+          return;
+        }
+        setLogs(json.logs);
+        setPagination(json.pagination);
+      })
+      .catch(() => setError("Could not reach the server"))
+      .finally(() => setLoading(false));
+  }, [category, page]);
 
-  useEffect(() => { load(); }, [category, page]);
+  useEffect(() => { load(); }, [load]);
 
   if (error) return <EmptyState title="Can't show the audit log" text={error} />;
 
@@ -52,7 +58,9 @@ export default function AuditPage() {
       </div>
 
       <div className="filter-bar">
-        <select className="form-select" value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }}>
+        <select
+        title="Filter by Category"
+         className="form-select" value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }}>
           <option value="">All categories</option>
           {CATEGORIES.map((c) => <option key={c} value={c}>{c[0].toUpperCase() + c.slice(1)}</option>)}
         </select>

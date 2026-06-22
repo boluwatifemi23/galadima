@@ -1,16 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
 import { DEPARTMENTS } from "@/lib/types";
-import { CATEGORIES, FORMULAS, KPI_TYPES, STATUSES } from "@/lib/kpiOptions";
+
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/constants";
+import { CATEGORIES, FORMULAS, KPI_TYPES, STATUSES } from "@/lib/kpiOptions";
+
+interface KpiListItem {
+  _id: string;
+  name: string;
+  employee?: { name: string };
+  department: string;
+  status: string;
+  isOverdue: boolean;
+  achievementPercent?: number;
+  dueDate: string;
+}
+
+interface TemplateItem {
+  name: string;
+  description: string;
+  category: string;
+  formula: string;
+  kpiType: string;
+  targetValue: number;
+  weight: number;
+  evidenceRequired: boolean;
+}
+
+interface Template {
+  _id: string;
+  name: string;
+  description?: string;
+  department: string;
+  kpis: TemplateItem[];
+}
+
+interface TemplateForm {
+  name: string;
+  description: string;
+  department: string;
+  kpis: TemplateItem[];
+}
+
+interface AssignEmployee {
+  _id: string;
+  name: string;
+  department: string;
+}
 
 export default function KpisPage() {
   const { role, department } = useAuth();
@@ -45,13 +89,12 @@ export default function KpisPage() {
 }
 
 function KPIsTab({ canManage }: { canManage: boolean }) {
-  const [kpis, setKpis] = useState<any[]>([]);
+  const [kpis, setKpis] = useState<KpiListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
   const [kpiType, setKpiType] = useState("");
 
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (status) params.set("status", status);
@@ -63,9 +106,9 @@ function KPIsTab({ canManage }: { canManage: boolean }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [status, kpiType]);
 
-  useEffect(() => { load(); }, [status, kpiType]);
+  useEffect(() => { load(); }, [load]);
 
   return (
     <div>
@@ -119,24 +162,23 @@ function emptyTemplateItem() {
 }
 
 function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: string }) {
-  const [templates, setTemplates] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState<any>({ name: "", description: "", department: myRole === "department_head" ? myDepartment : "", kpis: [emptyTemplateItem()] });
+  const [editing, setEditing] = useState<Template | null>(null);
+  const [form, setForm] = useState<TemplateForm>({ name: "", description: "", department: myRole === "department_head" ? myDepartment : "", kpis: [emptyTemplateItem()] });
   const [saving, setSaving] = useState(false);
 
-  const [assignTarget, setAssignTarget] = useState<any>(null);
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [assignTarget, setAssignTarget] = useState<Template | null>(null);
+  const [employees, setEmployees] = useState<AssignEmployee[]>([]);
   const [assignEmployeeId, setAssignEmployeeId] = useState("");
   const [assigning, setAssigning] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Template | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
       const res = await fetch("/api/kpi-templates");
       const json = await res.json();
@@ -144,9 +186,9 @@ function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: 
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   function openCreate() {
     setEditing(null);
@@ -154,13 +196,13 @@ function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: 
     setFormOpen(true);
   }
 
-  function openEdit(t: any) {
+  function openEdit(t: Template) {
     setEditing(t);
     setForm({ name: t.name, description: t.description || "", department: t.department, kpis: t.kpis });
     setFormOpen(true);
   }
 
-  function updateItem(index: number, field: string, value: any) {
+  function updateItem(index: number, field: keyof TemplateItem, value: string | number | boolean) {
     const items = [...form.kpis];
     items[index] = { ...items[index], [field]: value };
     setForm({ ...form, kpis: items });
@@ -194,7 +236,7 @@ function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: 
     }
   }
 
-  async function openAssign(t: any) {
+  async function openAssign(t: Template) {
     setAssignTarget(t);
     setAssignEmployeeId("");
     const dept = myRole === "department_head" ? myDepartment : t.department;
@@ -319,13 +361,13 @@ function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: 
           </div>
 
           <p className="modal-danger-zone-label" style={{ marginTop: 18 }}>KPI Line Items</p>
-          {form.kpis.map((item: any, index: number) => (
+          {form.kpis.map((item: TemplateItem, index: number) => (
             <div key={index} className="card" style={{ marginBottom: 10 }}>
               <div className="card-body">
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                   <strong style={{ fontSize: "0.8125rem" }}>KPI #{index + 1}</strong>
                   {form.kpis.length > 1 && (
-                    <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--color-primary)" }} onClick={() => setForm({ ...form, kpis: form.kpis.filter((_: any, i: number) => i !== index) })}>
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--color-primary)" }} onClick={() => setForm({ ...form, kpis: form.kpis.filter((_: TemplateItem, i: number) => i !== index) })}>
                       Remove
                     </button>
                   )}

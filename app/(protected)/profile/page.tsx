@@ -15,6 +15,11 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 export default function ProfilePage() {
   const user = useAuth();
 
@@ -28,7 +33,7 @@ export default function ProfilePage() {
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
 
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
 
@@ -40,7 +45,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const supported = "serviceWorker" in navigator && "PushManager" in window;
-    setPushSupported(supported);
+    // Browser feature detection — deferred a tick so this isn't a synchronous
+    // setState call within the effect body.
+    Promise.resolve().then(() => setPushSupported(supported));
     if (!supported) return;
     navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).then(async (reg) => {
       setSubscription(await reg.pushManager.getSubscription());
@@ -48,11 +55,15 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent));
-    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const standalone = window.matchMedia("(display-mode: standalone)").matches;
+    Promise.resolve().then(() => {
+      setIsIOS(ios);
+      setIsStandalone(standalone);
+    });
     function handler(e: Event) {
       e.preventDefault();
-      setInstallPrompt(e);
+      setInstallPrompt(e as BeforeInstallPromptEvent);
     }
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
@@ -173,7 +184,9 @@ export default function ProfilePage() {
           </div>
           <div className="form-group">
             <label className="form-label">Email</label>
-            <input className="form-input" value={user.email} disabled style={{ opacity: 0.6 }} />
+            <input
+            title="Your Email Address"
+             className="form-input" value={user.email} disabled style={{ opacity: 0.6 }} />
             <p className="form-hint">Contact an admin to change your email.</p>
           </div>
           <button type="submit" className="btn btn-primary" disabled={savingProfile}>

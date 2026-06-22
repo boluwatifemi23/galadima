@@ -6,15 +6,23 @@ import { useAuth } from "@/providers/AuthProvider";
 import { DEPARTMENTS } from "@/lib/types";
 import EmptyState from "@/components/EmptyState";
 
+interface Broadcast {
+  _id: string;
+  title: string;
+  message: string;
+  createdAt: string;
+  recipientGroup: string;
+  recipientUserIds: string[];
+}
+
 export default function BroadcastPage() {
   const { role, department } = useAuth();
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<Broadcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ title: "", message: "", department: role === "department_head" ? department : "" });
   const [sending, setSending] = useState(false);
 
   async function load() {
-    setLoading(true);
     try {
       const res = await fetch("/api/broadcast");
       const json = await res.json();
@@ -72,11 +80,15 @@ export default function BroadcastPage() {
           </div>
           <div className="form-group">
             <label className="form-label required">Message</label>
-            <textarea className="form-textarea" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
+            <textarea
+            title="Enter the message for this broadcast"
+             className="form-textarea" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
           </div>
           <div className="form-group">
             <label className="form-label">Audience</label>
-            <select className="form-select" value={form.department} disabled={role === "department_head"} onChange={(e) => setForm({ ...form, department: e.target.value })}>
+            <select
+             title="Select the audience for this broadcast"
+             className="form-select" value={form.department} disabled={role === "department_head"} onChange={(e) => setForm({ ...form, department: e.target.value })}>
               <option value="">Everyone</option>
               {DEPARTMENTS.map((d) => <option key={d} value={d}>{d} only</option>)}
             </select>

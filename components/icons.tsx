@@ -136,6 +136,25 @@ export function IconChevronDown({ className, size = 20 }: IconProps) {
   );
 }
 
+export function IconReport({ className, size = 20 }: IconProps) {
+  return (
+    <svg width={size} height={size} className={className} {...base}>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5" />
+      <path d="M9 17v-3M12 17v-5M15 17v-2" />
+    </svg>
+  );
+}
+
+export function IconUpload({ className, size = 20 }: IconProps) {
+  return (
+    <svg width={size} height={size} className={className} {...base}>
+      <path d="M12 16V4M7 9l5-5 5 5" />
+      <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+    </svg>
+  );
+}
+
 export function IconLogOut({ className, size = 20 }: IconProps) {
   return (
     <svg width={size} height={size} className={className} {...base}>

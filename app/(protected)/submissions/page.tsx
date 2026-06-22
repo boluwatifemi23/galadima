@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
@@ -8,11 +8,21 @@ import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import { formatDate } from "@/lib/constants";
 
+interface Submission {
+  _id: string;
+  kpi: { _id: string; name: string };
+  employee: { name: string; employeeId: string };
+  submittedValue: number;
+  notes?: string;
+  submittedAt: string;
+  status: string;
+}
+
 export default function SubmissionsPage() {
   const { role } = useAuth();
   const canReview = role === "super_admin" || role === "department_head" || role === "hr_admin";
 
-  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(canReview ? "pending_review" : "");
 
@@ -20,8 +30,7 @@ export default function SubmissionsPage() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewing, setReviewing] = useState(false);
 
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (status) params.set("status", status);
@@ -32,9 +41,9 @@ export default function SubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [status]);
 
-  useEffect(() => { load(); }, [status]);
+  useEffect(() => { load(); }, [load]);
 
   async function handleReview(submissionId: string, action: "approve" | "reject") {
     setReviewing(true);
@@ -72,7 +81,9 @@ export default function SubmissionsPage() {
       </div>
 
       <div className="filter-bar">
-        <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select
+        title="Filter"
+         className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
           <option value="pending_review">Pending Review</option>
           <option value="approved">Approved</option>

@@ -7,7 +7,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { NAV_ITEMS, ROLE_LABELS } from "@/lib/constants";
 import {
   IconDashboard, IconBuilding, IconUsers, IconTarget, IconFileCheck,
-  IconBell, IconMegaphone, IconHistory, IconShield,
+  IconBell, IconMegaphone, IconHistory, IconShield, IconReport,
 } from "@/components/icons";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
@@ -18,10 +18,10 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string; size?: 
   "/submissions": IconFileCheck,
   "/alerts": IconBell,
   "/broadcast": IconMegaphone,
+  "/reports": IconReport,
   "/audit": IconHistory,
   "/admin": IconShield,
 };
-
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const user = useAuth();
