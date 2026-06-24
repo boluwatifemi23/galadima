@@ -4,6 +4,8 @@ import Department from "@/lib/models/Department";
 import User from "@/lib/models/User";
 import { requireAuth, requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
+import { isDuplicateKeyError } from "@/lib/errors";
+
 
 export async function GET() {
   const { error } = await requireAuth();
