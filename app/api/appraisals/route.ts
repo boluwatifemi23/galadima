@@ -7,7 +7,6 @@ import { requireAuth, requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
 import { calculateAppraisalScore } from "@/lib/calculator";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
-import type { FilterQuery } from "mongoose";
 import type { Types } from "mongoose";
 
 export async function GET(req: NextRequest) {
@@ -20,7 +19,7 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || String(DEFAULT_PAGE_SIZE));
 
-  const query: FilterQuery<typeof Appraisal> = {};
+  const query: Record<string, unknown> = {};
 
   if (user!.role === "staff") {
     query.employee = user!._id;
