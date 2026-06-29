@@ -11,6 +11,8 @@ export interface IReport extends Document {
   pdfUrl?: string;
   sheetUrl?: string;
   emailSent: boolean;
+  department?: string;
+  employeeName?: string;
   summary?: Record<string, unknown>;
   createdAt: Date;
 }
@@ -25,6 +27,8 @@ const ReportSchema = new Schema<IReport>(
     pdfUrl: { type: String },
     sheetUrl: { type: String },
     emailSent: { type: Boolean, default: false },
+    department: { type: String },
+    employeeName: { type: String },
     summary: { type: Schema.Types.Mixed },
   },
   { timestamps: { createdAt: true, updatedAt: false } }

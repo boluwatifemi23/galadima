@@ -4,6 +4,7 @@ import KPI from "@/lib/models/KPI";
 import { requireAuth, requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
 import { getKPIPeriod, isKPIOverdue } from "@/lib/calculator";
+import { notifyUser } from "@/lib/notify";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
 
 export async function GET(req: NextRequest) {
@@ -102,13 +103,21 @@ export async function POST(req: NextRequest) {
       status: "pending",
     });
 
-    await createAuditLog({
+   await createAuditLog({
       userId: user!._id.toString(),
       category: "kpi",
       action: "kpi_created",
       resourceType: "KPI",
       resourceId: kpi._id.toString(),
       newValue: { name: kpi.name, employee, targetValue, weight },
+    });
+
+    await notifyUser(employee, {
+      title: "New KPI Assigned",
+      message: `"${kpi.name}" has been assigned to you, due ${new Date(kpi.dueDate).toLocaleDateString()}.`,
+      priority: "Medium",
+      source: "KPMS",
+      eventType: "kpi_assigned",
     });
 
     return NextResponse.json({ success: true, kpi }, { status: 201 });

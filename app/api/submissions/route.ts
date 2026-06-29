@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Submission from "@/lib/models/Submission";
 import KPI from "@/lib/models/KPI";
-import { requireAuth } from "@/lib/authorize";
+import { requireAuth, requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
 
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireAuth();
+  const { user, error } = await requireRole(["super_admin", "department_head", "staff"]);
   if (error) return error;
 
   await connectDB();

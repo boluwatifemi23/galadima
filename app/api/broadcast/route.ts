@@ -6,6 +6,10 @@ import PushSubscription from "@/lib/models/PushSubscription";
 import { requireAuth, requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
 import { sendPushToSubscriptions } from "@/lib/webpush";
+import type { HydratedDocument } from "mongoose";
+import type { IUser } from "@/lib/models/User"; // adjust to match your actual User interface export
+
+
 
 export async function GET() {
   const { error } = await requireAuth();
@@ -20,26 +24,44 @@ export async function POST(req: NextRequest) {
   const { user, error } = await requireRole(["super_admin", "department_head", "hr_admin"]);
   if (error) return error;
 
-  const { title, message, department } = await req.json();
+ const { title, message, department, employeeId } = await req.json();
   if (!title || !message) {
     return NextResponse.json({ success: false, error: "Title and message are required" }, { status: 400 });
   }
 
   await connectDB();
-  const userQuery: Record<string, unknown> = { isActive: true };
-  if (department) userQuery.department = department;
-  if (user!.role === "department_head") userQuery.department = user!.department; // can't broadcast outside own department
 
-  const recipients = await User.find(userQuery);
+  let recipients: HydratedDocument<IUser>[];
+
+  if (employeeId) {
+    const target = await User.findById(employeeId);
+    if (!target || !target.isActive) {
+      return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
+    }
+    if (user!.role === "department_head" && target.department !== user!.department) {
+      return NextResponse.json({ success: false, error: "You can only broadcast within your own department" }, { status: 403 });
+    }
+    if (user!.role === "hr_admin" && target.role !== "staff") {
+      return NextResponse.json({ success: false, error: "As HR, you can only broadcast to staff" }, { status: 403 });
+    }
+    recipients = [target];
+  } else {
+    const userQuery: Record<string, unknown> = { isActive: true };
+    if (department) userQuery.department = department;
+    if (user!.role === "department_head") userQuery.department = user!.department;
+    if (user!.role === "hr_admin") userQuery.role = "staff";
+    recipients = await User.find(userQuery);
+  }
+
   if (!recipients.length) {
     return NextResponse.json({ success: false, error: `No active users found${department ? ` in "${department}"` : ""}` }, { status: 404 });
   }
 
   const notification = await Notification.create({
     title, message, priority: "High", source: "Manual", eventType: "broadcast",
-    recipientGroup: department || "all_staff",
+    recipientGroup: employeeId ? "individual" : department || "all_staff",
     recipientUserIds: recipients.map((r) => r._id),
-    deliveryMode: "group", status: "sent",
+    deliveryMode: employeeId ? "targeted" : "group", status: "sent",
   });
 
   await createAuditLog({

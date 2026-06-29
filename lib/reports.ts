@@ -47,11 +47,21 @@ function getPreviousPeriod(type: ReportType) {
   }
 }
 
-export async function buildReportData(reportType: ReportType, department?: string, periodMode: "current" | "previous" = "previous") {
+export async function buildReportData(reportType: ReportType, department?: string, periodMode: "current" | "previous" = "previous", employeeId?: string) {
   const { start, end } = periodMode === "current" ? getKPIPeriod(reportType) : getPreviousPeriod(reportType);
 
   const query: Record<string, unknown> = { updatedAt: { $gte: start, $lte: end } };
-  if (department) query.department = department;
+  if (employeeId) {
+    query.employee = employeeId;
+  } else if (department) {
+    query.department = department;
+  }
+
+  let employeeName: string | undefined;
+  if (employeeId) {
+    const emp = await User.findById(employeeId).select("name");
+    employeeName = emp?.name;
+  }
 
   const kpis = await KPI.find(query).populate("employee", "name department");
   const approved = kpis.filter((k) => k.status === "approved");
@@ -82,6 +92,7 @@ export async function buildReportData(reportType: ReportType, department?: strin
 
   return {
     reportType,
+    employeeName,
     periodStart: start,
     periodEnd: end,
     companyScore,
@@ -138,7 +149,7 @@ function renderReportHtml(data: Awaited<ReturnType<typeof buildReportData>>): st
 </style></head>
 <body>
   ${headerBlock}
-  <p class="report-title">${REPORT_LABELS[data.reportType]}</p>
+ <p class="report-title">${REPORT_LABELS[data.reportType]}${data.employeeName ? ` — ${data.employeeName}` : ""}</p>
   <p class="sub">${fmt(data.periodStart)} – ${fmt(data.periodEnd)}</p>
   <div class="stats">
     <div class="stat"><div class="stat-label">Company Score</div><div class="stat-value">${data.companyScore}%</div></div>
@@ -186,15 +197,15 @@ function buildSheetRows(data: Awaited<ReturnType<typeof buildReportData>>): (str
   return rows;
 }
 
-export async function generateAndSendReport(reportType: ReportType, department?: string, generatedByUserId?: string, periodMode: "current" | "previous" = "previous") {
-  const data = await buildReportData(reportType, department, periodMode);
+export async function generateAndSendReport(reportType: ReportType, department?: string, generatedByUserId?: string, periodMode: "current" | "previous" = "previous", employeeId?: string) {
+  const data = await buildReportData(reportType, department, periodMode, employeeId);
   const html = renderReportHtml(data);
   const pdfBuffer = await htmlToPdfBuffer(html);
   const pdfUrl = await uploadBufferToCloudinary(pdfBuffer, "reports", `${reportType}-${Date.now()}`, "raw");
 
   let sheetUrl: string | undefined;
   try {
-    const tabName = department ? `${REPORT_LABELS[reportType]} - ${department}` : REPORT_LABELS[reportType];
+   const tabName = data.employeeName ? `${REPORT_LABELS[reportType]} - ${data.employeeName}` : department ? `${REPORT_LABELS[reportType]} - ${department}` : REPORT_LABELS[reportType];
     sheetUrl = await writeReportToSheet(tabName, buildSheetRows(data));
   } catch (err) {
     console.error("[reports] Google Sheets sync failed (continuing anyway):", err);
@@ -226,10 +237,12 @@ if (recipients.length === 0) {
     periodStart: data.periodStart,
     periodEnd: data.periodEnd,
     generatedBy: generatedByUserId,
-    recipientEmails: recipients,
+   recipientEmails: recipients,
     pdfUrl,
     sheetUrl,
     emailSent,
+    department: department || undefined,
+    employeeName: data.employeeName,
     summary: data,
   });
 

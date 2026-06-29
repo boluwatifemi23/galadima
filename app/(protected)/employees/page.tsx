@@ -5,7 +5,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
 import { ROLE_LABELS } from "@/lib/constants";
-import { DEPARTMENTS } from "@/lib/types";
+import { useDepartments } from "@/lib/hooks/useDepartments";
 import type { UserRole } from "@/lib/types";
 import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -35,7 +35,8 @@ export default function EmployeesPage() {
   const { role: myRole } = useAuth();
   const canManage = myRole === "super_admin" || myRole === "hr_admin";
   const canChangeRole = myRole === "super_admin";
-  const canDelete = myRole === "super_admin";
+const canDelete = myRole === "super_admin";
+  const { departments } = useDepartments();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,7 +269,7 @@ export default function EmployeesPage() {
             </option>
           ))}
         </select>
-        {canManage && (
+         {canManage && (
           <select
             title="Department"
             className="form-select"
@@ -276,13 +277,10 @@ export default function EmployeesPage() {
             onChange={(e) => setDeptFilter(e.target.value)}
           >
             <option value="">All departments</option>
-            {DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
+            {departments.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         )}
+        
       </div>
 
       <div className="card">
@@ -440,19 +438,10 @@ export default function EmployeesPage() {
             <div className="form-group">
               <label className="form-label required">Department</label>
               <select
-                title="Department"
-                className="form-select"
-                value={createForm.department}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, department: e.target.value })
-                }
-              >
+              title="Department"
+               className="form-select" value={createForm.department} onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })}>
                 <option value="">Select department</option>
-                {DEPARTMENTS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
+                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <p className="form-hint">
@@ -531,18 +520,9 @@ export default function EmployeesPage() {
           <div className="form-group">
             <label className="form-label">Department</label>
             <select
-              title="Department"
-              className="form-select"
-              value={manageForm.department}
-              onChange={(e) =>
-                setManageForm({ ...manageForm, department: e.target.value })
-              }
-            >
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
+            title="Department"
+             className="form-select" value={manageForm.department} onChange={(e) => setManageForm({ ...manageForm, department: e.target.value })}>
+              {departments.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div className="form-group">

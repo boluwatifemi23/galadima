@@ -6,6 +6,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import StatCard from "@/components/StatCard";
 import PriorityBadge from "@/components/PriorityBadge";
 import EmptyState from "@/components/EmptyState";
+import RecipientPicker from "@/components/RecipientPicker";
 
 interface Notification {
   _id: string;
@@ -43,7 +44,9 @@ export default function AlertsPage() {
   const [loading, setLoading] = useState(true);
   const [priority, setPriority] = useState("");
   const [ackFilter, setAckFilter] = useState("");
-  const [actingId, setActingId] = useState<string | null>(null);
+   const [actingId, setActingId] = useState<string | null>(null);
+  const [escalatingId, setEscalatingId] = useState<string | null>(null);
+  const [escalateTarget, setEscalateTarget] = useState({ department: "", employeeId: "" });
 
   const load = useCallback(async () => {
     try {
@@ -88,14 +91,16 @@ export default function AlertsPage() {
       const res = await fetch(`/api/notifications/${id}/escalate`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ employeeId: escalateTarget.employeeId || undefined }),
       });
       const json = await res.json();
       if (!json.success) {
         toast.error(json.error || "Could not escalate");
         return;
       }
-      toast.success("Escalated to leadership");
+      toast.success(escalateTarget.employeeId ? "Escalated to the chosen person" : "Escalated to leadership");
+      setEscalatingId(null);
+      setEscalateTarget({ department: "", employeeId: "" });
       load();
     } catch {
       toast.error("Could not reach the server");
@@ -160,8 +165,18 @@ export default function AlertsPage() {
                       {!n.acknowledged && (
                         <button className="btn btn-primary btn-sm" disabled={actingId === n._id} onClick={() => handleAcknowledge(n._id)}>Acknowledge</button>
                       )}
-                      {canEscalate && !n.escalated && (
-                        <button className="btn btn-secondary btn-sm" disabled={actingId === n._id} onClick={() => handleEscalate(n._id)}>Escalate</button>
+                     {canEscalate && !n.escalated && (
+                        escalatingId === n._id ? (
+                          <div style={{ minWidth: 220 }}>
+                            <RecipientPicker value={escalateTarget} onChange={setEscalateTarget} />
+                            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                              <button className="btn btn-secondary btn-sm" disabled={actingId === n._id} onClick={() => handleEscalate(n._id)}>Confirm</button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => setEscalatingId(null)}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button className="btn btn-secondary btn-sm" onClick={() => setEscalatingId(n._id)}>Escalate</button>
+                        )
                       )}
                     </div>
                   </div>

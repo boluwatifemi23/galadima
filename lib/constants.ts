@@ -21,6 +21,7 @@ export const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { label: "Employees", href: "/employees" },
     { label: "KPI Management", href: "/kpis" },
     { label: "Submissions", href: "/submissions" },
+    { label: "Appraisals", href: "/appraisals" },
     { label: "Alerts", href: "/alerts" },
     { label: "Broadcast", href: "/broadcast" },
     { label: "Reports", href: "/reports" },
@@ -41,12 +42,13 @@ export const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { label: "Submissions", href: "/submissions" },
     { label: "Alerts", href: "/alerts" },
   ],
- hr_admin: [
+  hr_admin: [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Departments", href: "/departments" },
     { label: "Employees", href: "/employees" },
     { label: "KPI Management", href: "/kpis" },
-    { label: "Submissions", href: "/submissions" },
+    { label: "Appraisals", href: "/appraisals" },
+    { label: "Broadcast", href: "/broadcast" },
     { label: "Reports", href: "/reports" },
     { label: "Audit Logs", href: "/audit" },
   ],

@@ -6,6 +6,7 @@ import User from "@/lib/models/User";
 import { requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
 import { getKPIPeriod } from "@/lib/calculator";
+import { notifyUser } from "@/lib/notify";
 import KPITemplate from "@/lib/KPITemplate";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -67,6 +68,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       newValue: { name: kpi.name, employee: employee.name, template: template.name },
     });
   }
+
+ await notifyUser(employee._id.toString(), {
+    title: "KPIs Assigned",
+    message: `${createdKPIs.length} new KPI(s) from "${template.name}" have been assigned to you.`,
+    priority: "Medium",
+    source: "KPMS",
+    eventType: "kpi_assigned",
+  });
 
   return NextResponse.json(
     { success: true, message: `${createdKPIs.length} KPI(s) assigned to ${employee.name}`, kpis: createdKPIs },

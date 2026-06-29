@@ -11,17 +11,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (error) return error;
 
   const { id } = await params;
-  const { reason } = await req.json().catch(() => ({ reason: undefined }));
+const { reason, employeeId } = await req.json().catch(() => ({ reason: undefined, employeeId: undefined }));
 
   await connectDB();
   const notification = await Notification.findById(id);
   if (!notification) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
 
-  const leadership = await User.find({ role: { $in: ["department_head", "super_admin"] }, isActive: true }).select("_id");
+  let targets: Awaited<ReturnType<typeof User.find>>;
+  if (employeeId) {
+    const target = await User.findById(employeeId);
+    if (!target) return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
+    targets = [target];
+  } else {
+    targets = await User.find({ role: { $in: ["department_head", "super_admin"] }, isActive: true }).select("_id");
+  }
+
   notification.escalated = true;
   notification.priority = "Critical";
-  const mergedIds = [...new Set([...notification.recipientUserIds.map(String), ...leadership.map((u) => u._id.toString())])];
-  notification.recipientUserIds = mergedIds.map((mid) => new mongoose.Types.ObjectId(mid));
+ const existingIds = notification.recipientUserIds.map((id) => id.toString());
+const newIds = targets.map((u) => u._id.toString());
+const merged = [...new Set([...existingIds, ...newIds])];
+notification.recipientUserIds = merged.map((id) => new mongoose.Types.ObjectId(id));
   await notification.save();
 
   await createAuditLog({

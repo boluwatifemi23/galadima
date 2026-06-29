@@ -43,6 +43,25 @@ function dedupe(users: IUser[]) {
   });
 }
 
+export async function notifyUser(userId: string, params: { title: string; message: string; priority: NotificationPriority; source: NotificationSource; eventType: string }) {
+  const notification = await Notification.create({
+    title: params.title,
+    message: params.message,
+    priority: params.priority,
+    source: params.source,
+    eventType: params.eventType,
+    recipientGroup: "direct",
+    recipientUserIds: [userId],
+    deliveryMode: "targeted",
+    status: "sent",
+  });
+
+  const subscriptions = await PushSubscription.find({ user: userId });
+  await sendPushToSubscriptions(subscriptions, { title: params.title, body: params.message, priority: params.priority });
+
+  return notification;
+}
+
 export async function dispatchNotification(params: DispatchParams) {
   let recipients: IUser[] = [];
   let deliveryMode: "group" | "targeted" = "group";

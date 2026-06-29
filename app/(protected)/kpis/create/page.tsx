@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
-import { DEPARTMENTS } from "@/lib/types";
+import { useDepartments } from "@/lib/hooks/useDepartments";
 import { CATEGORIES, FORMULAS, KPI_TYPES } from "@/lib/kpiOptions";
 
 
@@ -16,7 +16,8 @@ interface Employee {
 
 export default function CreateKpiPage() {
   const router = useRouter();
-  const { role, department } = useAuth();
+ const { role, department } = useAuth();
+  const { departments } = useDepartments();
 
   const [form, setForm] = useState({
     name: "", description: "",
@@ -87,11 +88,15 @@ export default function CreateKpiPage() {
               <div className="form-grid-2">
             <div className="form-group">
               <label className="form-label required">Department</label>
-              <select
-              title="Select the department for this KPI"
-               className="form-select" value={form.department} disabled={role === "department_head"} onChange={(e) => setForm({ ...form, department: e.target.value, employee: "" })}>
+               <select
+                title="Department"
+                className="form-select"
+                value={form.department}
+                disabled={role === "department_head"}
+                onChange={(e) => setForm({ ...form, department: e.target.value, employee: "" })}
+              >
                 <option value="">Select department</option>
-                {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div className="form-group">

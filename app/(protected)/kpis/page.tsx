@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
-import { DEPARTMENTS } from "@/lib/types";
+import { useDepartments } from "@/lib/hooks/useDepartments";
 
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
@@ -170,7 +170,8 @@ function emptyTemplateItem() {
 }
 
 function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: string }) {
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const { departments } = useDepartments();
+ const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -361,10 +362,14 @@ function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: 
           <div className="form-group">
             <label className="form-label required">Department</label>
             <select
-             title="Select the department for this template"
-             className="form-select" value={form.department} disabled={myRole === "department_head"} onChange={(e) => setForm({ ...form, department: e.target.value })}>
+              title="Department"
+              className="form-select"
+              value={form.department}
+              disabled={myRole === "department_head"}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
+            >
               <option value="">Select department</option>
-              {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+              {departments.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
 
@@ -375,9 +380,14 @@ function TemplatesTab({ myRole, myDepartment }: { myRole: string; myDepartment: 
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                   <strong style={{ fontSize: "0.8125rem" }}>KPI #{index + 1}</strong>
                   {form.kpis.length > 1 && (
-                    <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--color-primary)" }} onClick={() => setForm({ ...form, kpis: form.kpis.filter((_: TemplateItem, i: number) => i !== index) })}>
-                      Remove
-                    </button>
+                  <button
+  type="button"
+  className="btn btn-ghost btn-sm"
+  style={{ color: "var(--color-primary)" }}
+  onClick={() => setForm({ ...form, kpis: form.kpis.filter((_, i) => i !== index) })}
+>
+  Remove
+</button>
                   )}
                 </div>
                 <div className="form-group">

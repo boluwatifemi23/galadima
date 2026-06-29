@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
-import { DEPARTMENTS } from "@/lib/types";
+import RecipientPicker from "@/components/RecipientPicker";
 import EmptyState from "@/components/EmptyState";
 
 interface Broadcast {
@@ -19,7 +19,7 @@ export default function BroadcastPage() {
   const { role, department } = useAuth();
   const [history, setHistory] = useState<Broadcast[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ title: "", message: "", department: role === "department_head" ? department : "" });
+  const [form, setForm] = useState({ title: "", message: "", department: role === "department_head" ? department : "", employeeId: "" });
   const [sending, setSending] = useState(false);
 
   async function load() {
@@ -42,10 +42,10 @@ export default function BroadcastPage() {
     }
     setSending(true);
     try {
-      const res = await fetch("/api/broadcast", {
+     const res = await fetch("/api/broadcast", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: form.title, message: form.message, department: form.department || undefined }),
+        body: JSON.stringify({ title: form.title, message: form.message, department: form.department || undefined, employeeId: form.employeeId || undefined }),
       });
       const json = await res.json();
       if (!json.success) {
@@ -53,7 +53,7 @@ export default function BroadcastPage() {
         return;
       }
       toast.success(json.message || "Broadcast sent");
-      setForm({ title: "", message: "", department: role === "department_head" ? department : "" });
+     setForm({ title: "", message: "", department: role === "department_head" ? department : "", employeeId: "" });
       load();
     } catch {
       toast.error("Could not reach the server");
@@ -72,33 +72,34 @@ export default function BroadcastPage() {
       </div>
 
       <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-header"><h3>New Broadcast</h3></div>
-        <form onSubmit={handleSend} className="card-body">
-          <div className="form-group">
-            <label className="form-label required">Title</label>
-            <input className="form-input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Office closed Friday" />
-          </div>
-          <div className="form-group">
-            <label className="form-label required">Message</label>
-            <textarea
-            title="Enter the message for this broadcast"
-             className="form-textarea" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Audience</label>
-            <select
-             title="Select the audience for this broadcast"
-             className="form-select" value={form.department} disabled={role === "department_head"} onChange={(e) => setForm({ ...form, department: e.target.value })}>
-              <option value="">Everyone</option>
-              {DEPARTMENTS.map((d) => <option key={d} value={d}>{d} only</option>)}
-            </select>
-            {role === "department_head" && <p className="form-hint">You can only broadcast within your own department.</p>}
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={sending}>
-            {sending ? <span className="spinner" style={{ width: 14, height: 14 }} /> : "Send Broadcast"}
-          </button>
-        </form>
-      </div>
+  <div className="card-header"><h3>New Broadcast</h3></div>
+  <form onSubmit={handleSend} className="card-body">
+    <div className="form-group">
+      <label className="form-label required">Title</label>
+      <input className="form-input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Office closed Friday" />
+    </div>
+    <div className="form-group">
+      <label className="form-label required">Message</label>
+      <textarea
+        title="Enter the message for this broadcast"
+        className="form-textarea"
+        value={form.message}
+        onChange={(e) => setForm({ ...form, message: e.target.value })}
+      />
+    </div>
+    <RecipientPicker
+      value={{ department: form.department, employeeId: form.employeeId }}
+      onChange={(v) => setForm({ ...form, department: v.department, employeeId: v.employeeId })}
+      lockDepartment={role === "department_head" ? department : undefined}
+      roleFilter={role === "hr_admin" ? "staff" : undefined}
+    />
+    {role === "department_head" && <p className="form-hint">You can only broadcast within your own department.</p>}
+    {role === "hr_admin" && <p className="form-hint">As HR, broadcasts only reach Staff accounts.</p>}
+    <button type="submit" className="btn btn-primary" disabled={sending}>
+      {sending ? <span className="spinner" style={{ width: 14, height: 14 }} /> : "Send Broadcast"}
+    </button>
+  </form>  {/* ← form closes here, after the button */}
+</div>
 
       <div className="card">
         <div className="card-header"><h3>History</h3></div>

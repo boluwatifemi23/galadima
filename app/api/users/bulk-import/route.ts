@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/lib/models/User";
+import Department from "@/lib/models/Department";
 import { hashPassword } from "@/lib/auth";
 import { requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
@@ -89,7 +90,8 @@ export async function POST(
       continue;
     }
 
-    try {
+     try {
+      await Department.findOneAndUpdate({ name: row.department }, { name: row.department }, { upsert: true });
       const existing = await User.findOne({ email: row.email });
 
       if (existing) {
