@@ -3,7 +3,7 @@ import sgMail from "@sendgrid/mail";
 const apiKey = process.env.SENDGRID_API_KEY;
 if (apiKey) sgMail.setApiKey(apiKey);
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "gloria.a@landbookbyharmony.com";
+const FROM_EMAIL = process.env.EMAIL_FROM || "hr@landbookbyharmony.com";
 
 interface SendEmailParams {
   to: string | string[];
