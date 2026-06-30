@@ -13,6 +13,7 @@ interface ImportResult {
   skipped: number;
   errors: string[];
   newAccounts?: { name: string; email: string; temporaryPassword: string }[];
+  credentialsEmailed?: boolean;
 }
 
 // Add this type for raw Excel data
@@ -168,10 +169,17 @@ export default function BulkImportUploader({ type }: { type: "employees" | "kpis
           <div className="card-body">
             <p style={{ fontWeight: 600, marginBottom: 8 }}>Import Complete</p>
             <p style={{ fontSize: "0.875rem" }}>Created: {result.created} · Updated: {result.updated} · Skipped: {result.skipped}</p>
-            {result.newAccounts && result.newAccounts.length > 0 && (
-              <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 10 }} onClick={() => downloadCredentials(result.newAccounts!)}>
-                Download Credentials ({result.newAccounts.length})
-              </button>
+              {result.newAccounts && result.newAccounts.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadCredentials(result.newAccounts!)}>
+                  Download Credentials ({result.newAccounts.length})
+                </button>
+                <p style={{ fontSize: "0.8125rem", color: "var(--color-neutral-500)", marginTop: 6 }}>
+                  {result.credentialsEmailed
+                    ? "A copy of these credentials was also emailed to you."
+                    : "Could not email a copy — make sure to download it now."}
+                </p>
+              </div>
             )}
             {result.errors.length > 0 && (
               <div style={{ marginTop: 10 }}>

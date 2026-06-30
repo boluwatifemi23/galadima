@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as XLSX from "xlsx";
 import { connectDB } from "@/lib/db";
 import User from "@/lib/models/User";
 import Department from "@/lib/models/Department";
 import { hashPassword } from "@/lib/auth";
 import { requireRole } from "@/lib/authorize";
 import { createAuditLog } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
 import { generateTemporaryPassword } from "@/lib/constants";
 
 type UserRole = "super_admin" | "department_head" | "staff" | "hr_admin";
@@ -142,8 +144,23 @@ export async function POST(
     metadata: { created, updated, skipped, totalRows: rows.length },
   });
 
-  return NextResponse.json<BulkImportResult>({
-    success: true,
-    result: { created, updated, skipped, errors, newAccounts },
-  });
+  let credentialsEmailed = false;
+  if (newAccounts.length > 0) {
+    const worksheet = XLSX.utils.json_to_sheet(
+      newAccounts.map((a) => ({ Name: a.name, Email: a.email, "Temporary Password": a.temporaryPassword }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Credentials");
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const sendResult = await sendEmail({
+      to: user!.email,
+      subject: `New Employee Credentials — ${newAccounts.length} account(s) created`,
+      html: `<p>You just bulk-imported ${newAccounts.length} new employee account(s). Their login credentials are attached — each person gets one only, so keep this somewhere safe.</p>`,
+      attachments: [{ filename: "new-employee-credentials.xlsx", content: buffer, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }],
+    });
+    credentialsEmailed = sendResult.sent;
+  }
+
+  return NextResponse.json({ success: true, result: { created, updated, skipped, errors, newAccounts, credentialsEmailed } });
 }
