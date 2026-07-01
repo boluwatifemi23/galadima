@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  if (now.getDay() === 1) await tryGenerate("weekly");
+if (now.getDay() === 5) { // Friday
+    await tryGenerate("weekly");
+    generated.push("weekly");
+  }
 
   if (now.getDate() === 1) {
     await tryGenerate("monthly");

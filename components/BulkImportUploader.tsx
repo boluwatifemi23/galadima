@@ -49,10 +49,29 @@ export default function BulkImportUploader({ type }: { type: "employees" | "kpis
 
   const validRows = rows.filter((r) => r.errors.length === 0);
   const invalidRows = rows.filter((r) => r.errors.length > 0);
-
-  function downloadTemplate() {
+function downloadTemplate() {
     const t = TEMPLATES[type];
     const worksheet = XLSX.utils.json_to_sheet([t.sample], { header: t.headers });
+
+    // For the KPI template, force the Due Date column to Text format.
+    // This stops Excel from silently converting "2026-07-31" to a serial
+    // number when the user fills in dates — the single most common import error.
+    if (type === "kpis") {
+      const dueDateColIndex = t.headers.indexOf("Due Date");
+      if (dueDateColIndex >= 0) {
+        const colLetter = XLSX.utils.encode_col(dueDateColIndex);
+        // Set every cell in this column (including the sample row) as text type
+        const cellRef = `${colLetter}2`;
+        if (worksheet[cellRef]) {
+          worksheet[cellRef].t = "s"; // string type
+          worksheet[cellRef].z = "@"; // text number format
+        }
+        // Mark the column as text so new rows typed by the user stay as text
+        if (!worksheet["!cols"]) worksheet["!cols"] = [];
+        worksheet["!cols"][dueDateColIndex] = { wch: 14, z: "@" };
+      }
+    }
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
     XLSX.writeFile(workbook, `${type}-import-template.xlsx`);
