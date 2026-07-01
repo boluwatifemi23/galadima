@@ -67,8 +67,8 @@ function downloadTemplate() {
           worksheet[cellRef].z = "@"; // text number format
         }
         // Mark the column as text so new rows typed by the user stay as text
-        if (!worksheet["!cols"]) worksheet["!cols"] = [];
-        worksheet["!cols"][dueDateColIndex] = { wch: 14, z: "@" };
+       if (!worksheet["!cols"]) worksheet["!cols"] = [];
+        worksheet["!cols"][dueDateColIndex] = { wch: 14 };
       }
     }
 
